@@ -1,0 +1,9 @@
+*.swp
+*.sh
+*.rxe
+*.bin
+*.elf
+*.map
+implementation.oil
+kernel_cfg.c
+kernal_id.h
