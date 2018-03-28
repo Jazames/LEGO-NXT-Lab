@@ -6,6 +6,6 @@
 *.map
 implementation.oil
 kernel_cfg.c
-kernal_id.h
+kernel_id.h
 /build/*
 /build
