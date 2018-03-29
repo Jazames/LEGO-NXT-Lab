@@ -50,7 +50,7 @@ TASK(Task2)
 			display_int(ecrobot_get_nxtcolorsensor_light(PORT_ID), 0); // get light sensor data
 			display_goto_xy(0, 3);
 			display_string("Count: ");
-			display_int(count);
+			display_int(count, 0);
 			display_update();	
 		}	
 
