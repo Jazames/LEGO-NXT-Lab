@@ -31,21 +31,31 @@ void user_1ms_isr_type2(void)
 /* Alarm executed Task2 */
 TASK(Task2)
 {
+	u8 count = 0;
+
 	while(1)
 	{
-		WaitEvent(EventTask2);
-        ClearEvent(EventTask2);
+		if (count % 5 == 0)
+		{
+			WaitEvent(EventTask2);
+	        ClearEvent(EventTask2);
 
-		display_clear(0);
-		display_goto_xy(0, 0);
-		display_string("Welcome to my world!");
-		display_goto_xy(0, 1);
-		display_string("Name: Jay & James");
-		display_goto_xy(0, 2);
-		display_string("Light Sensor:");
-		display_int(ecrobot_get_nxtcolorsensor_light(PORT_ID), 0); // get light sensor data
-		display_string("Count:");
-		display_update();
+			display_clear(0);
+			display_goto_xy(0, 0);
+			display_string("Welcome to my world!");
+			display_goto_xy(0, 1);
+			display_string("Name: Jay & James");
+			display_goto_xy(0, 2);
+			display_string("Light Sensor: ");
+			display_int(ecrobot_get_nxtcolorsensor_light(PORT_ID), 0); // get light sensor data
+			display_goto_xy(0, 3);
+			display_string("Count: ");
+			display_int(count);
+			display_update();	
+		}	
+
+		count++;
+		systick_wait_ms(500);
 	}
 }
 
