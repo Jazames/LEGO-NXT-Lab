@@ -42,6 +42,32 @@ CPU ATMEL_AT91SAM7S256
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512; /* Stack size */
+	EVENT = EventTask2;
   };
+  
+  ALARM AlarmTask2
+  {
+   	COUNTER = SysTimerCnt;
+   	ACTION = SETEVENT
+   	{
+   		TASK = TestColorSensor;
+   		EVENT = EventTask2;
+   	};
+   	AUTOSTART = FALSE;
+  };
+
+  EVENT EventTask2
+  {
+   	MASK = AUTO;
+  };
+
+  /* Definition of OSEK Alarm Counter */
+  COUNTER SysTimerCnt
+  {
+    MINCYCLE = 1;
+    MAXALLOWEDVALUE = 10000;
+    TICKSPERBASE = 1; /* One tick is equal to 1msec */
+  };
+  
 };
 

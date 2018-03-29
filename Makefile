@@ -1,7 +1,7 @@
 # Target specific macros
 TARGET = part1_OSEK
 TARGET_SOURCES = \
-	skeleton.c helloworld.c
+	skeleton.c 
 TOPPERS_OSEK_OIL_SOURCE = ./helloworld.oil 
  
 # USER_LIB = ../../../lib/
