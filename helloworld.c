@@ -1,4 +1,5 @@
-/* helloworld.c for TOPPERS/ATK(OSEK) */ 
+/* helloworld.c for TOPPERS/ATK(OSEK) */
+#include <stdlib.h> 
 #include "kernel.h"
 #include "kernel_id.h"
 #include "ecrobot_interface.h"
@@ -10,7 +11,10 @@ TASK(OSEK_Task_Background)
 {
 	while(1)
 	{
-  		ecrobot_status_monitor("OSEK HelloWorld!");
-		systick_wait_ms(500); /* 500msec wait */
+  		//ecrobot_status_monitor("Okily Dokily");
+		//Need to somehow get sensor information
+		//Then need to display it. 
+		ecrobot_process_bg_nxtcolorsensor(); // communicates with NXT Color Sensor (this must be executed repeatedly in a background Task)
+		//systick_wait_ms(500); /* 500msec wait */
 	}
 }

@@ -1,8 +1,12 @@
 # Target specific macros
-TARGET = helloworld_OSEK
+TARGET = part1_OSEK
 TARGET_SOURCES = \
-	helloworld.c
-TOPPERS_OSEK_OIL_SOURCE = ./helloworld.oil
+	skeleton.c helloworld.c
+TOPPERS_OSEK_OIL_SOURCE = ./helloworld.oil 
+ 
+# USER_LIB = ../../../lib/
+# USER_INC_PATH = ../../../usr/
+
 
 # Don't modify below part
 O_PATH ?= build
