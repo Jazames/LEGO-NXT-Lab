@@ -31,7 +31,7 @@ void user_1ms_isr_type2(void)
 /* Alarm executed Task2 */
 TASK(Task2)
 {
-	u8 count = 0;
+	int count = 0;
 
 	while(1)
 	{
