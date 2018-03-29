@@ -46,7 +46,7 @@ TASK(Task2)
 			display_goto_xy(0, 1);
 			display_string("Name: Jay & James");
 			display_goto_xy(0, 2);
-			display_string("Light Sensor: ");
+			display_string("Light Sensor:");
 			display_int(ecrobot_get_nxtcolorsensor_light(PORT_ID), 0); // get light sensor data
 			display_goto_xy(0, 3);
 			display_string("Count:");
