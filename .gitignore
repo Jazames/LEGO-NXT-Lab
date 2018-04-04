@@ -9,3 +9,7 @@ kernel_cfg.c
 kernel_id.h
 /build/*
 /build
+/Test
+/Test/*
+/Part 1
+/Part 1/*
