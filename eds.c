@@ -16,11 +16,13 @@ DeclareEvent(TouchSensorOffEvent); /* Event declaration */
 void ecrobot_device_initialize()
 {
   nxt_motor_set_speed(NXT_PORT_A, 0, 1); 
+  nxt_motor_set_speed(NXT_PORT_B, 0, 1); 
 }
 
 void ecrobot_device_terminate()
 {
   nxt_motor_set_speed(NXT_PORT_A, 0, 1); 
+  nxt_motor_set_speed(NXT_PORT_B, 0, 1); 
 }
 
 /* LEJOS OSEK hook to be invoked from an ISR in category 2 */
@@ -67,10 +69,12 @@ TASK(EventHandler)
     WaitEvent(TouchSensorOnEvent); /* Task is in waiting status until the Event comes */ 
     ClearEvent(TouchSensorOnEvent);
     nxt_motor_set_speed(NXT_PORT_A, 50, 1);
+    nxt_motor_set_speed(NXT_PORT_B, 50, 1);
 
     WaitEvent(TouchSensorOffEvent); /* Task is in waiting status until the Event comes */
     ClearEvent(TouchSensorOffEvent);
     nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+    nxt_motor_set_speed(NXT_PORT_B, 0, 1);
   }
 
   TerminateTask();
