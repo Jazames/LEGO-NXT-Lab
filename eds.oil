@@ -38,8 +38,8 @@ CPU ATMEL_AT91SAM7S256
     STACKSIZE = 512; /* Stack size */ 
   };
 
-  /* Definition of EventHandler */
-  TASK EventHandler
+  /* Definition of MotorControlTask */
+  TASK MotorControlTask
   {
     AUTOSTART = TRUE
     {

@@ -6,7 +6,7 @@
 /* OSEK declarations */
 DeclareCounter(SysTimerCnt);
 DeclareTask(EventDispatcher); 
-DeclareTask(EventHandler);
+DeclareTask(MotorControlTask);
 DeclareTask(TaskLCD);
 
 DeclareEvent(TouchSensorOnEvent); /* Event declaration */
@@ -44,16 +44,17 @@ TASK(EventDispatcher)
   U8 TouchSensorStatus; 
 
   TouchSensorStatus = ecrobot_get_touch_sensor(NXT_PORT_S1);
+  
 
   if (TouchSensorStatus == 1 && TouchSensorStatus_old == 0)
   {
     /* Send a Touch Sensor ON Event to the Handler */ 
-    SetEvent(EventHandler, TouchSensorOnEvent);
+    SetEvent(MotorControlTask, TouchSensorOnEvent);
   }
   else if (TouchSensorStatus == 0 && TouchSensorStatus_old == 1)
   {
     /* Send a Touch Sensor OFF Event to the Handler */ 
-    SetEvent(EventHandler, TouchSensorOffEvent);
+    SetEvent(MotorControlTask, TouchSensorOffEvent);
   }
 
   TouchSensorStatus_old = TouchSensorStatus;
@@ -61,8 +62,8 @@ TASK(EventDispatcher)
   TerminateTask();
 }
 
-/* EventHandler executed by OSEK Events */
-TASK(EventHandler)
+/* MotorControlTask executed by OSEK Events */
+TASK(MotorControlTask)
 {
   while(1)
   {
