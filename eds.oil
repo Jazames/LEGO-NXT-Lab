@@ -18,13 +18,13 @@ CPU ATMEL_AT91SAM7S256
   /* Definition of application mode */
   APPMODE appmode1{};
 
-  /* Definition of Touch Sensor ON Event */
-  EVENT TouchSensorOnEvent{
+  /* Definition of Start Motor Event */
+  EVENT StartMotorEvent{
     MASK = AUTO;
   };
 
-  /* Definition of Touch Sensor OFF Event */
-  EVENT TouchSensorOffEvent{
+  /* Definition of Stop Motor Event */
+  EVENT StopMotorEvent{
     MASK = AUTO;
   };
 
@@ -49,8 +49,8 @@ CPU ATMEL_AT91SAM7S256
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512; /* Stack size */
-    EVENT = TouchSensorOnEvent;
-    EVENT = TouchSensorOffEvent; 
+    EVENT = StartMotorEvent;
+    EVENT = StopMotorEvent; 
   };
 
   /* Definition of TaskLCD */
@@ -82,7 +82,7 @@ CPU ATMEL_AT91SAM7S256
     AUTOSTART = TRUE
     {
         ALARMTIME = 1;
-        CYCLETIME = 1; /* Executed every 1msec */
+        CYCLETIME = 50; /* Executed every 50msec */
         APPMODE = appmode1;
     };
   };
