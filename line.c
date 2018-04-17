@@ -74,6 +74,7 @@ TASK(EventDispatcher)
   }
   */
 
+  
   //sonar_old = sonar;
   TouchSensorStatus_old = TouchSensorStatus;
 
