@@ -1,8 +1,8 @@
 # Target specific macros
-TARGET = EDS
+TARGET = Line Follower
 TARGET_SOURCES := \
-	eds.c
-TOPPERS_OSEK_OIL_SOURCE := ./eds.oil
+	line.c
+TOPPERS_OSEK_OIL_SOURCE := ./line.oil
 
 O_PATH ?= build
 
