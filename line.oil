@@ -18,13 +18,23 @@ CPU ATMEL_AT91SAM7S256
   /* Definition of application mode */
   APPMODE appmode1{};
 
-  /* Definition of Start Motor Event */
-  EVENT StartMotorEvent{
+  /* Definition of Events */
+  EVENT LineLostEvent{
     MASK = AUTO;
   };
-
-  /* Definition of Stop Motor Event */
-  EVENT StopMotorEvent{
+  EVENT LineFoundEvent{
+    MASK = AUTO;
+  };
+  EVENT FinishFoundEvent{
+    MASK = AUTO;
+  };
+  EVENT ObstacleDetectedEvent{
+    MASK = AUTO;
+  };
+  EVENT DistanceTraveledLeftEvent{
+    MASK = AUTO;
+  };
+  EVENT DistanceTraveledRightEvent{
     MASK = AUTO;
   };
 

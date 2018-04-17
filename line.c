@@ -1,18 +1,20 @@
-/* eds.c */ 
 #include "kernel.h"
 #include "kernel_id.h"
 #include "ecrobot_interface.h"
 
-
-
-/* OSEK declarations */
+/* Task declarations */
 DeclareCounter(SysTimerCnt);
 DeclareTask(EventDispatcher); 
 DeclareTask(MotorControlTask);
 DeclareTask(TaskLCD);
 
-DeclareEvent(StartMotorEvent); /* Event declaration */
-DeclareEvent(StopMotorEvent); /* Event declaration */ 
+/* Event Declarations */
+DeclareEvent(LineLostEvent);
+DeclareEvent(LineFoundEvent);
+DeclareEvent(FinishFoundEvent);
+DeclareEvent(ObstacleDetectedEvent);
+DeclareEvent(DistanceTraveledLeftEvent);
+DeclareEvent(DistanceTraveledRightEvent);
 
 
 /* Global Constants */
@@ -50,12 +52,8 @@ void user_1ms_isr_type2(void)
 /* EventDispatcher executed every 50ms */
 TASK(EventDispatcher)
 {
-	//static U8 TouchSensorStatus_old = 0;
-	static int sonar_old = 0;
-	//U8 TouchSensorStatus; 
-	int sonar;
-	int countA = 0;
-	int countB = 0;
+  static int sonar_old = 0;
+  int sonar;
 	
 	//countA = nxt_motor_get_count(NXT_PORT_A);
 	//countB = nxt_motor_get_count(NXT_PORT_B);
@@ -114,6 +112,14 @@ void stepForward()
 	nxt_motor_set_speed(NXT_PORT_A, 0, 1);
     nxt_motor_set_speed(NXT_PORT_B, 0, 1);
 }
+
+  SetEvent(MainControlTask, LineLostEvent);
+  SetEvent(MainControlTask, LineFoundEvent);
+  SetEvent(MainControlTask, FinishFoundEvent);
+  SetEvent(MainControlTask, ObstacleDetectedEvent);
+  SetEvent(MainControlTask, DistanceTraveledLeftEvent);
+  SetEvent(MainControlTask, DistanceTraveledRightEvent);
+
 
 bool checkLeftNarrow()
 {
