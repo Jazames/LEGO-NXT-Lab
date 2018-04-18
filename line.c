@@ -276,6 +276,13 @@ void turnRight90()
 	turnRight();
 }
 
+void forwardUntilLine()
+{
+	ClearEvent(LineFoundEvent);
+	moveForward();
+	WaitEvent(LineFoundEvent);
+}
+
 bool checkLeft()
 {
 	EventMaskType eventmask = 0;
@@ -414,11 +421,25 @@ TASK(MainControlTask)
 		if(eventmask & ObstacleDetectedEvent)
 		{
 			//Frikkin turn 90 degrees!
-			
+			turnLeft90();
+			stepForward();
+			stepForward();
+			stepForward();
+			stepForward();
+			stepForward();
+			turnRight90();
+			stepForward();
+			stepForward();
+			stepForward();
+			stepForward();
+			stepForward();
+			turnRight90();
+			forwardUntilLine();
+			turnLeft90();
+			findLine();
 		}
-		
+		moveForward();
 	}
-	
 	TerminateTask();
 }
 
