@@ -5,7 +5,7 @@
 /* Task declarations */
 DeclareCounter(SysTimerCnt);
 DeclareTask(EventDispatcher); 
-DeclareTask(MotorControlTask);
+DeclareTask(MainControlTask);
 DeclareTask(TaskLCD);
 
 /* Event Declarations */
@@ -93,49 +93,192 @@ TASK(EventDispatcher)
 }
 
 /*Functions for different motor control schemes*/
-void followLine()
+void moveForward()
 {
 	nxt_motor_set_speed(NXT_PORT_A, FORWARD_SPEED, 1);
     nxt_motor_set_speed(NXT_PORT_B, FORWARD_SPEED, 1);
+}
+
+void halt()
+{
+	nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+	nxt_motor_set_speed(NXT_PORT_B, 0, 1);
 }
 
 void stepForward()
 {
-	ClearEvent(TraveledStep);
+	EventMaskType eventmask = 0;
 	
-	nxt_motor_set_speed(NXT_PORT_A, FORWARD_SPEED, 1);
-    nxt_motor_set_speed(NXT_PORT_B, FORWARD_SPEED, 1);
+	ClearEvent(DistanceTraveledLeftEvent);
+	ClearEvent(DistanceTraveledRightEvent);
 	
-	WaitEvent(TraveledStep);
-	ClearEvent(TraveledStep);
+	moveForward();
 	
-	nxt_motor_set_speed(NXT_PORT_A, 0, 1);
-    nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+	WaitEvent(DistanceTraveledLeftEvent | DistanceTraveledRightEvent);
+	GetEvent(MainControlTask, &eventmask);
+	if(eventmask & DistanceTraveledLeftEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		WaitEvent(DistanceTraveledRightEvent);
+	}
+	else
+	{
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		WaitEvent(DistanceTraveledLeftEvent);
+	}
+	halt();
+	ClearEvent(DistanceTraveledLeftEvent);
+	ClearEvent(DistanceTraveledRightEvent);
 }
 
+void stepBackward()
+{
+	EventMaskType eventmask = 0;
+	
+	ClearEvent(DistanceTraveledLeftEvent);
+	ClearEvent(DistanceTraveledRightEvent);
+	
+	//Send the motors backward. 
+	nxt_motor_set_speed(NXT_PORT_A, -FORWARD_SPEED, 1);
+	nxt_motor_set_speed(NXT_PORT_b, -FORWARD_SPEED, 1);
+	
+	WaitEvent(DistanceTraveledLeftEvent | DistanceTraveledRightEvent);
+	GetEvent(MainControlTask, &eventmask);
+	if(eventmask & DistanceTraveledLeftEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		WaitEvent(DistanceTraveledRightEvent);
+	}
+	else
+	{
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		WaitEvent(DistanceTraveledLeftEvent);
+	}
+	halt();
+	ClearEvent(DistanceTraveledLeftEvent);
+	ClearEvent(DistanceTraveledRightEvent);
+}
+
+/*
   SetEvent(MainControlTask, LineLostEvent);
   SetEvent(MainControlTask, LineFoundEvent);
   SetEvent(MainControlTask, FinishFoundEvent);
   SetEvent(MainControlTask, ObstacleDetectedEvent);
   SetEvent(MainControlTask, DistanceTraveledLeftEvent);
   SetEvent(MainControlTask, DistanceTraveledRightEvent);
+*/
 
-
-bool checkLeftNarrow()
+void turnLeft()
 {
 	EventMaskType eventmask = 0;
 	
-	ClearEvent(TurnedLeftEvent)
+	ClearEvent(DistanceTraveledLeftEvent);
+	ClearEvent(DistanceTraveledRightEvent);
 	
 	nxt_motor_set_speed(NXT_PORT_A, -TURNING_SPEED, 1);
 	nxt_motor_set_speed(NXT_PORT_B,  TURNING_SPEED, 1);
 	
-	WaitEvent(TurnedLeftEvent | LineFoundEvent);
-	GetEvent(MotorControlTask, &eventmask);
+	WaitEvent(DistanceTraveledLeftEvent | DistanceTraveledRightEvent);
+	GetEvent(MainControlTask, &eventmask);
 	
-	nxt_motor_set_speed(NXT_PORT_A, 0, 1);
-	nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+	if(eventmask & DistanceTraveledLeftEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		ClearEvent(DistanceTraveledLeftEvent);
+		WaitEvent(DistanceTraveledRightEvent);
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		ClearEvent(DistanceTraveledRightEvent);
+	}
+	else if(eventmask & DistanceTraveledRightEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		ClearEvent(DistanceTraveledRightEvent);
+		WaitEvent(DistanceTraveledLeftEvent);
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		ClearEvent(DistanceTraveledLeftEvent);
+	}
+	halt();
+}
+
+void turnLeft90()
+{
+	turnLeft();
+	turnLeft();
+	turnLeft();
+	turnLeft();
+}
+
+void turnRight()
+{
+	EventMaskType eventmask = 0;
 	
+	ClearEvent(DistanceTraveledLeftEvent);
+	ClearEvent(DistanceTraveledRightEvent);
+	
+	nxt_motor_set_speed(NXT_PORT_A,  TURNING_SPEED, 1);
+	nxt_motor_set_speed(NXT_PORT_B, -TURNING_SPEED, 1);
+	
+	WaitEvent(DistanceTraveledLeftEvent | DistanceTraveledRightEvent);
+	GetEvent(MainControlTask, &eventmask);
+	
+	if(eventmask & DistanceTraveledLeftEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		ClearEvent(DistanceTraveledLeftEvent);
+		WaitEvent(DistanceTraveledRightEvent);
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		ClearEvent(DistanceTraveledRightEvent);
+	}
+	else if(eventmask & DistanceTraveledRightEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		ClearEvent(DistanceTraveledRightEvent);
+		WaitEvent(DistanceTraveledLeftEvent);
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		ClearEvent(DistanceTraveledLeftEvent);
+	}
+	halt();
+}
+
+void turnRight90()
+{
+	turnRight();
+	turnRight();
+	turnRight();
+	turnRight();
+}
+
+bool checkLeft()
+{
+	EventMaskType eventmask = 0;
+	
+	ClearEvent(LineFoundEvent);
+	ClearEvent(DistanceTraveledLeftEvent);
+	ClearEvent(DistanceTraveledRightEvent);
+	
+	nxt_motor_set_speed(NXT_PORT_A, -TURNING_SPEED, 1);
+	nxt_motor_set_speed(NXT_PORT_B,  TURNING_SPEED, 1);
+	
+	WaitEvent(DistanceTraveledLeftEvent | DistanceTraveledRightEvent | LineFoundEvent);
+	GetEvent(MainControlTask, &eventmask);
+	
+	if(eventmask & DistanceTraveledLeftEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		ClearEvent(DistanceTraveledLeftEvent);
+		WaitEvent(DistanceTraveledRightEvent);
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		ClearEvent(DistanceTraveledRightEvent);
+	}
+	else if(eventmask & DistanceTraveledRightEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		ClearEvent(DistanceTraveledRightEvent);
+		WaitEvent(DistanceTraveledLeftEvent);
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		ClearEvent(DistanceTraveledLeftEvent);
+	}
+	halt();
 	if(eventmask & LineFoundEvent)//Line was found
 	{
 		ClearEvent(LineFoundEvent);
@@ -144,21 +287,37 @@ bool checkLeftNarrow()
 	return false;
 }
 
-bool checkRightNarrow()
+bool checkRight()
 {
 	EventMaskType eventmask = 0;
 	
-	ClearEvent(TurnedRightEvent)
+	ClearEvent(LineFoundEvent);
+	ClearEvent(DistanceTraveledLeftEvent);
+	ClearEvent(DistanceTraveledRightEvent);
 	
 	nxt_motor_set_speed(NXT_PORT_A,  TURNING_SPEED, 1);
 	nxt_motor_set_speed(NXT_PORT_B, -TURNING_SPEED, 1);
 	
-	WaitEvent(TurnedRightEvent | LineFoundEvent);
-	GetEvent(MotorControlTask, &eventmask);
+	WaitEvent(DistanceTraveledLeftEvent | DistanceTraveledRightEvent | LineFoundEvent);
+	GetEvent(MainControlTask, &eventmask);
 	
-	nxt_motor_set_speed(NXT_PORT_A, 0, 1);
-	nxt_motor_set_speed(NXT_PORT_B, 0, 1);
-	
+	if(eventmask & DistanceTraveledLeftEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		ClearEvent(DistanceTraveledLeftEvent);
+		WaitEvent(DistanceTraveledRightEvent);
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		ClearEvent(DistanceTraveledRightEvent);
+	}
+	else if(eventmask & DistanceTraveledRightEvent)
+	{
+		nxt_motor_set_speed(NXT_PORT_B, 0, 1);
+		ClearEvent(DistanceTraveledRightEvent);
+		WaitEvent(DistanceTraveledLeftEvent);
+		nxt_motor_set_speed(NXT_PORT_A, 0, 1);
+		ClearEvent(DistanceTraveledLeftEvent);
+	}
+	halt();
 	if(eventmask & LineFoundEvent)//Line was found
 	{
 		ClearEvent(LineFoundEvent);
@@ -169,19 +328,15 @@ bool checkRightNarrow()
 
 void findLine()
 {
-	if(checkLeftNarrow())
+	if(checkLeft())
 	{
 		return;
 	}
-	if(checkRightNarrow())
+	if(checkRight())
 	{
 		return;
 	}
-	if(checkLeftWide())
-	{
-		return;
-	}
-	if(checkRightWide())
+	if(checkRight())
 	{
 		return;
 	}
@@ -189,25 +344,54 @@ void findLine()
 }
 
 
-/* MotorControlTask executed by OSEK Events */
-TASK(MotorControlTask)
+/* MainControlTask executed by OSEK Events */
+TASK(MainControlTask)
 {
-  while(1)
-  {
-	ClearEvent(StartMotorEvent);
-    WaitEvent(StartMotorEvent); /* Task is in waiting status until the Event comes */ 
-    ClearEvent(StartMotorEvent);
-    nxt_motor_set_speed(NXT_PORT_A, 50, 1);
-    nxt_motor_set_speed(NXT_PORT_B, 50, 1);
-
-	ClearEvent(StopMotorEvent);
-    WaitEvent(StopMotorEvent); /* Task is in waiting status until the Event comes */
-    ClearEvent(StopMotorEvent);
-    nxt_motor_set_speed(NXT_PORT_A, 0, 1);
-    nxt_motor_set_speed(NXT_PORT_B, 0, 1);
-  }
-
-  TerminateTask();
+	EventMaskType eventmask = 0;
+	//First must cross starting line
+	//moveForward()
+	//WaitEvent(FinishFoundEvent);
+	moveForward();
+	while(1)
+	{
+		WaitEvent(FinishFoundEvent | LineLostEvent | ObstacleDetectedEvent);
+		GetEvent(MainControlTask, &eventmask);
+		if(eventmask & FinishFoundEvent)
+		{
+			ClearEvent(FinishFoundEvent);
+			stepForward();
+			stepForward();
+			halt();
+			TerminateTask();
+		}
+		if(eventmask & LineLostEvent)
+		{
+			ClearEvent(LineLostEvent);
+			stepForward();
+			GetEvent(MainControlTask, &eventmask);
+			if(eventmask & LineFoundEvent)
+			{
+				ClearEvent(LineFoundEvent);
+				//Then we're at the dashed portion, and we're good to keep going forward. 
+			}
+			else
+			{
+				//May perhaps want to try to find the line before backing up?
+				
+				//Back up and reorient.  
+				stepBackward();
+				findLine();
+			}
+		}
+		if(eventmask & ObstacleDetectedEvent)
+		{
+			//Frikkin turn 90 degrees!
+			
+		}
+		
+	}
+	
+	TerminateTask();
 }
 
 /* TaskLCD executed every 500ms */
