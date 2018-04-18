@@ -61,6 +61,7 @@ TASK(EventDispatcher)
   static int rightMotorCount_total = 0;
   static int leftMotorCount_old    = 0;
   static int rightMotorCount_old   = 0;
+  static U16 color_old 			   = NXT_COLOR_UNKNOWN;
 
   // Local variables
   int sonar;
@@ -68,6 +69,7 @@ TASK(EventDispatcher)
   int rightMotorCount;
   int distance;
   U16 color;
+
 	
   // Pull values from sensors
 	sonar = ecrobot_get_sonar_sensor(NXT_PORT_S2);
@@ -111,7 +113,7 @@ TASK(EventDispatcher)
     SetEvent(MainControlTask, DistanceTraveledRightEvent);
     rightMotorCount_total = 0;
   }
-  if leftMotorCount_total >= STEP_DISTANCE)
+  if (leftMotorCount_total >= STEP_DISTANCE)
   {
     SetEvent(MainControlTask, DistanceTraveledLeftEvent);
     leftMotorCount_total = 0;
@@ -168,7 +170,7 @@ void stepBackward()
 	
 	//Send the motors backward. 
 	nxt_motor_set_speed(NXT_PORT_A, -FORWARD_SPEED, 1);
-	nxt_motor_set_speed(NXT_PORT_b, -FORWARD_SPEED, 1);
+	nxt_motor_set_speed(NXT_PORT_B, -FORWARD_SPEED, 1);
 	
 	WaitEvent(DistanceTraveledLeftEvent | DistanceTraveledRightEvent);
 	GetEvent(MainControlTask, &eventmask);
@@ -283,7 +285,7 @@ void forwardUntilLine()
 	WaitEvent(LineFoundEvent);
 }
 
-bool checkLeft()
+int checkLeft()
 {
 	EventMaskType eventmask = 0;
 	
@@ -317,12 +319,12 @@ bool checkLeft()
 	if(eventmask & LineFoundEvent)//Line was found
 	{
 		ClearEvent(LineFoundEvent);
-		return true;
+		return 1;
 	}
-	return false;
+	return 0;
 }
 
-bool checkRight()
+int checkRight()
 {
 	EventMaskType eventmask = 0;
 	
@@ -356,9 +358,9 @@ bool checkRight()
 	if(eventmask & LineFoundEvent)//Line was found
 	{
 		ClearEvent(LineFoundEvent);
-		return true;
+		return 1;
 	}
-	return false;
+	return 0;
 }
 
 void findLine()

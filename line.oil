@@ -48,8 +48,8 @@ CPU ATMEL_AT91SAM7S256
     STACKSIZE = 512; /* Stack size */ 
   };
 
-  /* Definition of MotorControlTask */
-  TASK MotorControlTask
+  /* Definition of MainControlTask */
+  TASK MainControlTask
   {
     AUTOSTART = TRUE
     {
@@ -59,8 +59,12 @@ CPU ATMEL_AT91SAM7S256
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512; /* Stack size */
-    EVENT = StartMotorEvent;
-    EVENT = StopMotorEvent; 
+    EVENT = LineLostEvent;
+	EVENT = LineFoundEvent;
+	EVENT = FinishFoundEvent;
+	EVENT = ObstacleDetectedEvent;
+	EVENT = DistanceTraveledLeftEvent;
+	EVENT = DistanceTraveledRightEvent;
   };
 
   /* Definition of TaskLCD */
