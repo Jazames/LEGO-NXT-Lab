@@ -17,14 +17,14 @@ DeclareEvent(DistanceTraveledLeftEvent);
 DeclareEvent(DistanceTraveledRightEvent);
 
 /* Global Constant Settings */
-// Motor speed 0 -> 100, negative for orientation
-const int FORWARD_SPEED = -50; 
-// Turning speed 0 -> 100, negative for orientation
-const int TURNING_SPEED = -50; 
+// Motor speed 0 -> 100, negative due to orientation
+const int FORWARD_SPEED = 100; 
+// Turning speed 0 -> 100, negative due to orientation
+const int TURNING_SPEED = 100; 
 // Minimum motor distance in degrees before firing the distance traveled event
-const int STEP_DISTANCE = 360;
+const int STEP_DISTANCE = 222;
 // Distance to object before obstacle detection event fires 
-const int OBSTACLE_DIST =  10;
+const int OBSTACLE_DIST =  5;
 
 /* LEJOS OSEK hooks */
 void ecrobot_device_initialize()
@@ -55,7 +55,7 @@ void user_1ms_isr_type2(void)
   }
 }
 
-/* EventDispatcher executed every 50ms */
+/* EventDispatcher executed every 5ms */
 TASK(EventDispatcher)
 {
   // Static variables
@@ -72,13 +72,14 @@ TASK(EventDispatcher)
   int distance;
   U16 color;
 
+  
   ecrobot_process_bg_nxtcolorsensor();
 	
   // Pull values from sensors
   sonar = ecrobot_get_sonar_sensor(NXT_PORT_S2);
   leftMotorCount = nxt_motor_get_count(NXT_PORT_A);
   rightMotorCount = nxt_motor_get_count(NXT_PORT_B);
-  color = ecrobot_get_nxtcolorsensor_light(NXT_PORT_S1);
+  color = ecrobot_get_nxtcolorsensor_id(NXT_PORT_S1);
 
   // Update the motor distances
   distance = leftMotorCount - leftMotorCount_old;
@@ -94,11 +95,11 @@ TASK(EventDispatcher)
   {
     SetEvent(MainControlTask, FinishFoundEvent);
   }
-  else if (color_old == NXT_COLOR_BLACK && color != NXT_COLOR_BLACK)
+  else if ((color_old == NXT_COLOR_BLACK || color_old == NXT_COLOR_BLUE) && color != NXT_COLOR_BLACK && color != NXT_COLOR_BLUE)
   {
     SetEvent(MainControlTask, LineLostEvent);
   }
-  else if (color_old != NXT_COLOR_BLACK && color == NXT_COLOR_BLACK)
+  else if ((color_old != NXT_COLOR_BLACK && color_old != NXT_COLOR_BLUE) && (color == NXT_COLOR_BLACK || color == NXT_COLOR_BLUE))
   {
     SetEvent(MainControlTask, LineFoundEvent);
   }
@@ -107,7 +108,7 @@ TASK(EventDispatcher)
   // Sonar Events
 	if(sonar != -1 && sonar <= OBSTACLE_DIST)
 	{
-    SetEvent(MainControlTask, ObstacleDetectedEvent);
+		SetEvent(MainControlTask, ObstacleDetectedEvent);
 	}
 	
   // Motor Events
@@ -191,15 +192,6 @@ void stepBackward()
 	ClearEvent(DistanceTraveledLeftEvent);
 	ClearEvent(DistanceTraveledRightEvent);
 }
-
-/*
-  SetEvent(MainControlTask, LineLostEvent);
-  SetEvent(MainControlTask, LineFoundEvent);
-  SetEvent(MainControlTask, FinishFoundEvent);
-  SetEvent(MainControlTask, ObstacleDetectedEvent);
-  SetEvent(MainControlTask, DistanceTraveledLeftEvent);
-  SetEvent(MainControlTask, DistanceTraveledRightEvent);
-*/
 
 void turnLeft()
 {
@@ -292,6 +284,15 @@ int checkLeft()
 {
 	EventMaskType eventmask = 0;
 	
+	/*
+	GetEvent(MainControlTask, &eventmask);
+	if(eventmask & LineFoundEvent)
+	{
+		ClearEvent(LineFoundEvent);
+		return 1;
+	}
+	*/
+	
 	ClearEvent(LineFoundEvent);
 	ClearEvent(DistanceTraveledLeftEvent);
 	ClearEvent(DistanceTraveledRightEvent);
@@ -331,10 +332,19 @@ int checkRight()
 {
 	EventMaskType eventmask = 0;
 	
+	/*)
+	GetEvent(MainControlTask, &eventmask);
+	if(eventmask & LineFoundEvent)
+	{
+		ClearEvent(LineFoundEvent);
+		return 1;
+	}
+	*/
+	
 	ClearEvent(LineFoundEvent);
 	ClearEvent(DistanceTraveledLeftEvent);
 	ClearEvent(DistanceTraveledRightEvent);
-	
+
 	nxt_motor_set_speed(NXT_PORT_A,  TURNING_SPEED, 1);
 	nxt_motor_set_speed(NXT_PORT_B, -TURNING_SPEED, 1);
 	
@@ -368,19 +378,61 @@ int checkRight()
 
 void findLine()
 {
-	if(checkLeft())
+	int i = 1;
+	int j = 0;
+	while(i < 10)
 	{
-		return;
-	}
-	if(checkRight())
-	{
-		return;
-	}
-	if(checkRight())
-	{
-		return;
+		for(j = 0; j < i; j++)
+		{
+			if(checkLeft())
+			{
+				return;
+			}
+		}
+		for(j = 0; j < i * 2; j++)
+		{
+			if(checkRight())
+			{
+				return;
+			}
+		}
+		for(j = 0; j < i; j++)
+		{
+			if(checkLeft())
+			{
+				return;
+			}
+		}
+		if(i < 3)
+		{
+			stepForward();
+		}
+		else
+		{
+			i++;
+		}
+		i++;
 	}
 	//If here is reached, no line was found. So do bad things like fly backwards maybe. 
+	//stepBackward();
+	//findLine();
+}
+
+void navigateBox()
+{
+	int i = 0;
+	for(i = 0; i < 3; i++)
+	{
+		turnRight();
+	}
+	for(i = 0; i < 5; i++)
+	{
+		stepForward();
+	}
+	for(i = 0; i < 4; i++)
+	{
+		turnLeft();
+	}
 }
 
 
@@ -402,14 +454,28 @@ TASK(MainControlTask)
 	stepBackward();
 	*/
 	
+	
+	
 	while(1)
 	{
 		moveForward();
 		ClearEvent(LineLostEvent);
-		WaitEvent(LineLostEvent);
-		ClearEvent(LineLostEvent);
-		findLine();
+		WaitEvent(LineLostEvent /* | ObstacleDetectedEvent */);
+		//GetEvent(MainControlTask, &eventmask);
+		//if(eventmask & LineLostEvent)
+		//{
+			ClearEvent(LineLostEvent);
+			stepForward();
+			findLine();
+		//}
+		//else if(eventmask & ObstacleDetectedEvent)
+		//{
+		//	ClearEvent(ObstacleDetectedEvent);
+		//	navigateBox();
+		//}
 	}
+	
+	
 	
 	//First must cross starting line
 	//moveForward()
@@ -417,7 +483,9 @@ TASK(MainControlTask)
 	moveForward();
 	while(1)
 	{
-		WaitEvent(FinishFoundEvent | LineLostEvent | ObstacleDetectedEvent);
+		//ClearEvent(FinishFoundEvent);
+		//ClearEvent(LineLostEvent);
+		WaitEvent(FinishFoundEvent | LineLostEvent /*| ObstacleDetectedEvent*/);
 		GetEvent(MainControlTask, &eventmask);
 		if(eventmask & FinishFoundEvent)
 		{
@@ -442,10 +510,22 @@ TASK(MainControlTask)
 				//May perhaps want to try to find the line before backing up?
 				
 				//Back up and reorient.  
-				stepBackward();
+				//stepBackward();
 				findLine();
+				GetEvent(MainControlTask, &eventmask);
+				if(eventmask & LineFoundEvent)
+				{
+					ClearEvent(LineFoundEvent);
+					//Then we're at the dashed portion, and we're good to keep going forward. 
+				}
+				else
+				{
+					//stepBackward();
+					findLine();
+				}
 			}
 		}
+		/*
 		if(eventmask & ObstacleDetectedEvent)
 		{
 			//Frikkin turn 90 degrees!
@@ -466,6 +546,7 @@ TASK(MainControlTask)
 			turnLeft90();
 			findLine();
 		}
+		*/
 		moveForward();
 	}
 	TerminateTask();
@@ -474,8 +555,40 @@ TASK(MainControlTask)
 /* TaskLCD executed every 500ms */
 TASK(TaskLCD)
 {
-  ecrobot_status_monitor("EDS");
-
+	ecrobot_status_monitor("Line Follower");
+	
+	/*
+	display_goto_xy(0,1);
+	display_string("Color: ");
+	switch(ecrobot_get_nxtcolorsensor_id(NXT_PORT_S1)) // get color number data
+	{
+		case NXT_COLOR_BLACK:
+			display_string("BLACK");
+			break;
+		case NXT_COLOR_BLUE:
+			display_string("BLUE");
+			break;
+		case NXT_COLOR_GREEN:
+			display_string("GREEN");
+			break;
+		case NXT_COLOR_YELLOW:
+			display_string("YELLOW");
+			break;
+		case NXT_COLOR_ORANGE:
+			display_string("ORANGE");
+			break;
+		case NXT_COLOR_RED:
+			display_string("RED");
+			break;
+		case NXT_COLOR_WHITE:
+			display_string("WHITE");
+			break;
+		default:
+			display_string("UNKNOWN COLOR");
+			break;
+	}
+	*/
+	
 	
   TerminateTask();
 }
