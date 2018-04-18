@@ -20,7 +20,7 @@ DeclareEvent(DistanceTraveledRightEvent);
 // Motor speed 0 -> 100, negative for orientation
 const int FORWARD_SPEED = -50; 
 // Turning speed 0 -> 100, negative for orientation
-const int TURNING_SPEED = -30; 
+const int TURNING_SPEED = -50; 
 // Minimum motor distance in degrees before firing the distance traveled event
 const int STEP_DISTANCE = 360;
 // Distance to object before obstacle detection event fires 
@@ -31,14 +31,16 @@ void ecrobot_device_initialize()
 {
   nxt_motor_set_speed(NXT_PORT_A, 0, 1); 
   nxt_motor_set_speed(NXT_PORT_B, 0, 1); 
-  ecrobot_init_sonar_sensor(NXT_PORT_S4);
+  ecrobot_init_sonar_sensor(NXT_PORT_S2);
+  ecrobot_init_nxtcolorsensor(NXT_PORT_S1, NXT_COLORSENSOR);
 }
 
 void ecrobot_device_terminate()
 {
   nxt_motor_set_speed(NXT_PORT_A, 0, 1); 
   nxt_motor_set_speed(NXT_PORT_B, 0, 1); 
-  ecrobot_term_sonar_sensor(NXT_PORT_S4);
+  ecrobot_term_sonar_sensor(NXT_PORT_S2);
+  ecrobot_term_nxtcolorsensor(NXT_PORT_S1);
 }
 
 /* LEJOS OSEK hook to be invoked from an ISR in category 2 */
@@ -70,9 +72,10 @@ TASK(EventDispatcher)
   int distance;
   U16 color;
 
+  ecrobot_process_bg_nxtcolorsensor();
 	
   // Pull values from sensors
-	sonar = ecrobot_get_sonar_sensor(NXT_PORT_S2);
+  sonar = ecrobot_get_sonar_sensor(NXT_PORT_S2);
   leftMotorCount = nxt_motor_get_count(NXT_PORT_A);
   rightMotorCount = nxt_motor_get_count(NXT_PORT_B);
   color = ecrobot_get_nxtcolorsensor_light(NXT_PORT_S1);
@@ -234,8 +237,8 @@ void turnLeft90()
 {
 	turnLeft();
 	turnLeft();
-	turnLeft();
-	turnLeft();
+	//turnLeft();
+	//turnLeft();
 }
 
 void turnRight()
@@ -274,8 +277,8 @@ void turnRight90()
 {
 	turnRight();
 	turnRight();
-	turnRight();
-	turnRight();
+	//turnRight();
+	//turnRight();
 }
 
 void forwardUntilLine()
@@ -385,6 +388,29 @@ void findLine()
 TASK(MainControlTask)
 {
 	EventMaskType eventmask = 0;
+	
+	/*
+	stepForward();
+	stepBackward();
+	turnLeft();
+	stepForward();
+	turnRight();
+	stepBackward();
+	turnLeft90();
+	stepBackward();
+	turnRight90();
+	stepBackward();
+	*/
+	
+	while(1)
+	{
+		moveForward();
+		ClearEvent(LineLostEvent);
+		WaitEvent(LineLostEvent);
+		ClearEvent(LineLostEvent);
+		findLine();
+	}
+	
 	//First must cross starting line
 	//moveForward()
 	//WaitEvent(FinishFoundEvent);
