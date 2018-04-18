@@ -16,11 +16,15 @@ DeclareEvent(ObstacleDetectedEvent);
 DeclareEvent(DistanceTraveledLeftEvent);
 DeclareEvent(DistanceTraveledRightEvent);
 
-
-/* Global Constants */
-const int FORWARD_SPEED = -50;
-const int TURNING_SPEED = -30;
-
+/* Global Constant Settings */
+// Motor speed 0 -> 100, negative for orientation
+const int FORWARD_SPEED = -50; 
+// Turning speed 0 -> 100, negative for orientation
+const int TURNING_SPEED = -30; 
+// Minimum motor distance in degrees before firing the distance traveled event
+const int STEP_DISTANCE = 360;
+// Distance to object before obstacle detection event fires 
+const int OBSTACLE_DIST =  10;
 
 /* LEJOS OSEK hooks */
 void ecrobot_device_initialize()
@@ -52,42 +56,66 @@ void user_1ms_isr_type2(void)
 /* EventDispatcher executed every 50ms */
 TASK(EventDispatcher)
 {
-  static int sonar_old = 0;
+  // Static variables
+  static int leftMotorCount_total  = 0;
+  static int rightMotorCount_total = 0;
+  static int leftMotorCount_old    = 0;
+  static int rightMotorCount_old   = 0;
+
+  // Local variables
   int sonar;
+  int leftMotorCount;
+  int rightMotorCount;
+  int distance;
+  U16 color;
 	
-	//countA = nxt_motor_get_count(NXT_PORT_A);
-	//countB = nxt_motor_get_count(NXT_PORT_B);
+  // Pull values from sensors
+	sonar = ecrobot_get_sonar_sensor(NXT_PORT_S2);
+  leftMotorCount = nxt_motor_get_count(NXT_PORT_A);
+  rightMotorCount = nxt_motor_get_count(NXT_PORT_B);
+  color = ecrobot_get_nxtcolorsensor_light(NXT_PORT_S1);
+
+  // Update the motor distances
+  distance = leftMotorCount - leftMotorCount_old;
+  leftMotorCount_total += distance * ((distance > 0) - (distance < 0));
+  leftMotorCount_old = leftMotorCount;
+  distance = rightMotorCount - rightMotorCount_old;
+  rightMotorCount_total += distance * ((distance > 0) - (distance < 0));
+  rightMotorCount_old = rightMotorCount;
 	
-	
-	
-	sonar = ecrobot_get_sonar_sensor(NXT_PORT_S4);
-	TouchSensorStatus = ecrobot_get_touch_sensor(NXT_PORT_S1);
-	
-	if(sonar != -1)
+  // Fire events as needed
+  // Color Events
+  if (color == NXT_COLOR_RED)
+  {
+    SetEvent(MainControlTask, FinishFoundEvent);
+  }
+  else if (color_old == NXT_COLOR_BLACK && color != NXT_COLOR_BLACK)
+  {
+    SetEvent(MainControlTask, LineLostEvent);
+  }
+  else if (color_old != NXT_COLOR_BLACK && color == NXT_COLOR_BLACK)
+  {
+    SetEvent(MainControlTask, LineFoundEvent);
+  }
+  color_old = color;
+  
+  // Sonar Events
+	if(sonar != -1 && sonar <= OBSTACLE_DIST)
 	{
-		sonar_old = sonar;
+    SetEvent(MainControlTask, ObstacleDetectedEvent);
 	}
 	
-	if (TouchSensorStatus == 1 && TouchSensorStatus_old == 0 && sonar_old <= 10)
-	{
-		/* Send a Touch Sensor ON Event to the Handler */ 
-		SetEvent(MotorControlTask, StartMotorEvent);
-	}
-	else if ((TouchSensorStatus == 0 && TouchSensorStatus_old == 1) || sonar_old > 10)
-	{
-		/* Send a Touch Sensor OFF Event to the Handler */ 
-		SetEvent(MotorControlTask, StopMotorEvent);
-	}
-	/*
-	if (sonar_old > 10)
-	{
-		SetEvent(MotorControlTask, StopMotorEvent); 
-	}
-	*/
-	
-	
-	//sonar_old = sonar;
-	TouchSensorStatus_old = TouchSensorStatus;
+  // Motor Events
+  if (rightMotorCount_total >= STEP_DISTANCE)
+  {
+    SetEvent(MainControlTask, DistanceTraveledRightEvent);
+    rightMotorCount_total = 0;
+  }
+  if leftMotorCount_total >= STEP_DISTANCE)
+  {
+    SetEvent(MainControlTask, DistanceTraveledLeftEvent);
+    leftMotorCount_total = 0;
+  }
 	
 	TerminateTask();
 }
